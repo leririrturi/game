@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Silent Standup</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg-deep:#080b10;--bg-primary:#0d1117;--bg-secondary:#161b22;
+  --bg-tertiary:#21262d;--bg-hover:#292e36;
+  --text-primary:#e6edf3;--text-secondary:#8b949e;--text-muted:#484f58;
+  --border:#30363d;--accent:#58a6ff;--accent-dim:#1f6feb30;
+  --danger:#f85149;--success:#3fb950;--warning:#d29922;
+  --priya:#e06c75;--marcus:#61afef;--lia:#c678dd;--tom:#98c379;
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif;
+  background:var(--bg-deep);color:var(--text-primary);line-height:1.5}
+.hidden{display:none!important}
+button{cursor:pointer;font-family:inherit}
+
+/* ── INTRO ────────────────────────────────────── */
+#intro{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+  background:var(--bg-deep);z-index:100;animation:fadeIn .8s ease}
+.intro-content{text-align:center;max-width:520px;padding:2rem}
+.intro-content h1{font-size:2.6rem;font-weight:700;letter-spacing:-.02em;
+  background:linear-gradient(135deg,var(--text-primary),var(--accent));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.5rem}
+.intro-content .subtitle{color:var(--accent);font-size:1rem;margin-bottom:1.5rem;font-weight:500}
+.intro-content .premise{color:var(--text-secondary);font-size:.95rem;margin-bottom:2rem;line-height:1.7}
+.intro-content .mechanics{color:var(--text-muted);font-size:.82rem;margin-bottom:2.5rem;
+  line-height:1.7;border-top:1px solid var(--border);padding-top:1.2rem;text-align:left}
+.intro-content .mechanics strong{color:var(--text-secondary)}
+#start-btn{background:var(--accent);color:#fff;border:none;padding:.75rem 2rem;
+  border-radius:8px;font-size:1rem;font-weight:600;transition:all .2s;letter-spacing:.01em}
+#start-btn:hover{filter:brightness(1.15);transform:translateY(-1px)}
+.intro-content .credit{color:var(--text-muted);font-size:.75rem;margin-top:1.5rem}
+
+/* ── GAME LAYOUT ──────────────────────────────── */
+#game{position:fixed;inset:0;display:flex;flex-direction:column;background:var(--bg-primary)}
+header{display:flex;align-items:center;justify-content:space-between;padding:.6rem 1.2rem;
+  border-bottom:1px solid var(--border);background:var(--bg-secondary);min-height:48px;flex-shrink:0}
+.header-left{display:flex;align-items:center;gap:1rem}
+.channel-name{font-weight:700;font-size:.95rem;color:var(--text-primary)}
+.day-badge{font-size:.75rem;color:var(--accent);background:var(--accent-dim);
+  padding:.15rem .6rem;border-radius:10px;font-weight:600}
+.trust-wrap{display:flex;align-items:center;gap:.5rem}
+.trust-label{font-size:.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em}
+.trust-bar{width:100px;height:6px;background:var(--bg-tertiary);border-radius:3px;overflow:hidden}
+.trust-fill{height:100%;background:var(--warning);border-radius:3px;transition:width .6s ease,background-color .6s ease;width:30%}
+
+#main-layout{display:flex;flex:1;overflow:hidden}
+
+/* ── SIDEBAR ──────────────────────────────────── */
+#sidebar{width:220px;border-right:1px solid var(--border);background:var(--bg-secondary);
+  padding:1rem .8rem;overflow-y:auto;flex-shrink:0}
+#sidebar h3{font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;
+  color:var(--text-muted);margin-bottom:.8rem;padding-left:.3rem}
+.tm-card{display:flex;align-items:center;gap:.6rem;padding:.55rem .5rem;
+  border-radius:6px;margin-bottom:.3rem;transition:background .2s}
+.tm-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-weight:700;font-size:.8rem;color:#fff;flex-shrink:0}
+.tm-info{flex:1;min-width:0}
+.tm-name{font-size:.82rem;font-weight:600;color:var(--text-primary)}
+.tm-role{font-size:.68rem;color:var(--text-muted)}
+.tm-safety-bar{width:100%;height:3px;background:var(--bg-tertiary);border-radius:2px;margin-top:4px;overflow:hidden}
+.tm-safety-fill{height:100%;border-radius:2px;transition:width .6s ease,background-color .6s ease}
+.tm-disclosed{position:relative}
+.tm-disclosed::after{content:'✓';position:absolute;top:2px;right:6px;
+  font-size:.65rem;color:var(--success);font-weight:700}
+
+/* ── CHAT ─────────────────────────────────────── */
+#chat-container{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative}
+#chat-messages{flex:1;overflow-y:auto;padding:1rem 1.2rem 0;display:flex;flex-direction:column;gap:.15rem}
+#chat-messages::-webkit-scrollbar{width:6px}
+#chat-messages::-webkit-scrollbar-thumb{background:var(--bg-tertiary);border-radius:3px}
+
+.msg{opacity:0;transform:translateY(8px);animation:msgIn .3s ease forwards;max-width:720px}
+@keyframes msgIn{to{opacity:1;transform:translateY(0)}}
+.msg-wrap{display:flex;gap:.6rem;padding:.45rem .6rem;border-radius:6px}
+.msg-wrap:hover{background:var(--bg-secondary)}
+.msg-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-weight:700;font-size:.82rem;color:#fff;flex-shrink:0;margin-top:2px}
+.msg-body{flex:1;min-width:0}
+.msg-header{display:flex;align-items:baseline;gap:.5rem;margin-bottom:.1rem}
+.msg-author{font-weight:700;font-size:.85rem}
+.msg-time{font-size:.68rem;color:var(--text-muted)}
+.msg-text{font-size:.9rem;color:var(--text-secondary);line-height:1.6;white-space:pre-wrap}
+
+.msg-narration{text-align:center;padding:.8rem 1rem;animation:msgIn .5s ease forwards}
+.msg-narration .msg-text{color:var(--text-muted);font-style:italic;font-size:.82rem;
+  border-left:none;max-width:560px;margin:0 auto}
+
+.msg-disclosure .msg-wrap{border-left:3px solid var(--warning);background:rgba(210,153,34,.06)}
+.msg-silence .msg-text{color:var(--text-muted);font-style:italic}
+
+.msg-system .msg-wrap{border-left:3px solid var(--accent);background:rgba(88,166,255,.04)}
+
+/* ── TYPING INDICATOR ─────────────────────────── */
+#typing-area{padding:0 1.2rem;min-height:28px}
+.typing-indicator{display:flex;align-items:center;gap:.4rem;padding:.3rem .6rem;
+  font-size:.78rem;color:var(--text-muted);opacity:0;animation:msgIn .2s ease forwards}
+.typing-indicator .dots span{animation:blink 1.4s infinite;font-weight:700}
+.typing-indicator .dots span:nth-child(2){animation-delay:.2s}
+.typing-indicator .dots span:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,60%,100%{opacity:.2}30%{opacity:1}}
+
+/* ── CHOICES ──────────────────────────────────── */
+#choices-area{padding:.6rem 1.2rem 1rem;border-top:1px solid var(--border);background:var(--bg-secondary)}
+.choices-prompt{font-size:.75rem;color:var(--text-muted);margin-bottom:.5rem;text-transform:uppercase;
+  letter-spacing:.05em;font-weight:600}
+.choice-btn{display:block;width:100%;text-align:left;padding:.7rem 1rem;margin-bottom:.4rem;
+  background:var(--bg-tertiary);border:1px solid var(--border);border-radius:8px;
+  color:var(--text-primary);font-size:.88rem;line-height:1.5;transition:all .15s}
+.choice-btn:hover{background:var(--bg-hover);border-color:var(--accent);transform:translateX(3px)}
+.choice-btn:active{transform:translateX(1px)}
+.choice-btn .choice-key{display:inline-block;width:22px;height:22px;line-height:22px;text-align:center;
+  background:var(--accent-dim);color:var(--accent);border-radius:4px;font-size:.72rem;
+  font-weight:700;margin-right:.6rem;flex-shrink:0;vertical-align:middle}
+
+/* ── DAY OVERLAY ──────────────────────────────── */
+#day-overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+  background:var(--bg-deep);z-index:90;opacity:0;transition:opacity .5s ease}
+#day-overlay.visible{opacity:1}
+.day-content{text-align:center}
+.day-number{display:block;font-size:3.5rem;font-weight:800;letter-spacing:-.03em;
+  background:linear-gradient(135deg,var(--text-primary),var(--accent));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.day-name{display:block;font-size:1.1rem;color:var(--text-muted);margin-top:.3rem;letter-spacing:.1em;
+  text-transform:uppercase;font-weight:500}
+.day-subtitle{display:block;font-size:.85rem;color:var(--text-secondary);margin-top:.8rem;font-style:italic}
+
+/* ── ENDING ───────────────────────────────────── */
+#ending{position:fixed;inset:0;background:var(--bg-deep);z-index:100;overflow-y:auto;padding:3rem 1.5rem}
+.ending-content{max-width:600px;margin:0 auto}
+.ending-content h2{font-size:2rem;font-weight:700;margin-bottom:.3rem;text-align:center}
+.ending-rating{text-align:center;font-size:1.1rem;margin-bottom:1.5rem;font-weight:600}
+.ending-narrative{color:var(--text-secondary);font-size:.92rem;line-height:1.8;margin-bottom:2rem;
+  padding:1.2rem;background:var(--bg-secondary);border-radius:8px;border-left:3px solid var(--accent)}
+.ending-section{margin-bottom:1.8rem}
+.ending-section h3{font-size:.85rem;text-transform:uppercase;letter-spacing:.06em;
+  color:var(--text-muted);margin-bottom:.8rem}
+.result-card{display:flex;align-items:center;gap:.8rem;padding:.8rem;
+  background:var(--bg-secondary);border-radius:8px;margin-bottom:.5rem;
+  border-left:3px solid var(--border)}
+.result-card.disclosed{border-left-color:var(--success)}
+.result-card.silent{border-left-color:var(--danger)}
+.result-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-weight:700;font-size:.82rem;color:#fff;flex-shrink:0}
+.result-info{flex:1}
+.result-name{font-weight:600;font-size:.85rem}
+.result-detail{font-size:.78rem;color:var(--text-secondary);margin-top:.15rem}
+.result-status{font-size:.72rem;font-weight:600;padding:.2rem .5rem;border-radius:4px}
+.result-status.yes{background:rgba(63,185,80,.12);color:var(--success)}
+.result-status.no{background:rgba(248,81,73,.12);color:var(--danger)}
+.result-bar-wrap{margin-top:.4rem}
+.result-bar{height:4px;background:var(--bg-tertiary);border-radius:2px;overflow:hidden}
+.result-bar-fill{height:100%;border-radius:2px;transition:width 1.2s ease}
+.result-bar-label{font-size:.68rem;color:var(--text-muted);margin-top:.15rem;display:flex;justify-content:space-between}
+
+.ending-quote{text-align:center;padding:1.5rem;border-top:1px solid var(--border);margin-top:2rem}
+.ending-quote blockquote{color:var(--text-secondary);font-style:italic;font-size:.88rem;
+  line-height:1.7;max-width:480px;margin:0 auto .5rem}
+.ending-quote cite{color:var(--text-muted);font-size:.75rem}
+
+#replay-btn{display:block;margin:2rem auto 0;background:var(--accent);color:#fff;border:none;
+  padding:.65rem 1.8rem;border-radius:8px;font-size:.9rem;font-weight:600;transition:all .2s}
+#replay-btn:hover{filter:brightness(1.15);transform:translateY(-1px)}
+
+/* ── SPEED CONTROLS ───────────────────────────── */
+#speed-controls{position:fixed;bottom:12px;right:12px;z-index:80;display:flex;gap:4px}
+.speed-btn{background:var(--bg-tertiary);border:1px solid var(--border);color:var(--text-muted);
+  padding:.25rem .5rem;border-radius:4px;font-size:.68rem;transition:all .15s}
+.speed-btn:hover,.speed-btn.active{color:var(--accent);border-color:var(--accent)}
+
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+/* ── RESPONSIVE ───────────────────────────────── */
+@media(max-width:700px){
+  #sidebar{display:none}
+  header{padding:.5rem .8rem}
+  #chat-messages{padding:.8rem}
+  #choices-area{padding:.5rem .8rem .8rem}
+  .intro-content h1{font-size:1.8rem}
+  .day-number{font-size:2.5rem}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ INTRO ═══ -->
+<div id="intro">
+  <div class="intro-content">
+    <h1>The Silent Standup</h1>
+    <p class="subtitle">A Psychological Safety Simulation</p>
+    <p class="premise">You're a team lead running a remote sprint. Your four teammates each carry a hidden worry — a mistake, a confusion, a disagreement, an overload. They'll only speak up if you make it safe enough.</p>
+    <p class="mechanics">
+      <strong>How to play:</strong> Read your team's chat messages, then choose how to respond. Your words shape whether people feel safe to take interpersonal risks — asking questions, admitting errors, challenging plans, or asking for help.<br><br>
+      <strong>Win condition:</strong> Get at least 3 of 4 teammates to disclose their hidden concerns before the Friday deadline.<br>
+      <strong>Lose condition:</strong> Fewer than 3 disclosures — hidden issues compound into project failure.
+    </p>
+    <button id="start-btn">Start the Sprint →</button>
+    <p class="credit">Mechanics based on Amy C. Edmondson's research on psychological safety (1999, 2002)</p>
+  </div>
+</div>
+
+<!-- ═══ GAME ═══ -->
+<div id="game" class="hidden">
+  <header>
+    <div class="header-left">
+      <span class="channel-name"># dashboard-sprint</span>
+      <span class="day-badge" id="day-badge">Day 1 · Monday</span>
+    </div>
+    <div class="header-right">
+      <div class="trust-wrap">
+        <span class="trust-label">Team Openness</span>
+        <div class="trust-bar"><div class="trust-fill" id="trust-fill"></div></div>
+      </div>
+    </div>
+  </header>
+  <div id="main-layout">
+    <aside id="sidebar"></aside>
+    <div id="chat-container">
+      <div id="chat-messages"></div>
+      <div id="typing-area"></div>
+      <div id="choices-area" class="hidden"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ DAY OVERLAY ═══ -->
+<div id="day-overlay" class="hidden">
+  <div class="day-content">
+    <span class="day-number" id="overlay-day"></span>
+    <span class="day-name" id="overlay-name"></span>
+    <span class="day-subtitle" id="overlay-sub"></span>
+  </div>
+</div>
+
+<!-- ═══ ENDING ═══ -->
+<div id="ending" class="hidden"></div>
+
+<!-- ═══ SPEED ═══ -->
+<div id="speed-controls" class="hidden">
+  <button class="speed-btn" data-speed="1" title="Normal speed">1×</button>
+  <button class="speed-btn" data-speed="2" title="Fast">2×</button>
+  <button class="speed-btn" data-speed="4" title="Very fast">4×</button>
+</div>
+
+<script>
+// ════════════════════════════════════════════════
+//  DATA
+// ════════════════════════════════════════════════
+const TM = {
+  priya: { name:'Priya', role:'Backend Engineer', color:'#e06c75', initial:'P',
+    fear:'Being Seen as Incompetent', secret:'Corrupted test data running Monday\'s migration — has been silently trying to fix it all week' },
+  marcus: { name:'Marcus', role:'UX Designer', color:'#61afef', initial:'M',
+    fear:'Being Seen as Ignorant', secret:'Doesn\'t understand what stakeholders actually want from the dashboard — designing on guesswork' },
+  lia: { name:'Lia', role:'QA Lead', color:'#c678dd', initial:'L',
+    fear:'Being Seen as Negative', secret:'Believes the data architecture won\'t scale past a few hundred users and will fail in production' },
+  tom: { name:'Tom', role:'Frontend Developer', color:'#98c379', initial:'T',
+    fear:'Being Seen as Disruptive', secret:'Assigned to three projects simultaneously — working until 2 AM every night, burning out' },
+};
+
+const DAY_TITLES = [
+  null,
+  ['Day 1','Monday','Sprint kickoff'],
+  ['Day 2','Tuesday','First cracks'],
+  ['Day 3','Wednesday','Midpoint'],
+  ['Day 4','Thursday','The truth — or the silence'],
+  ['Day 5','Friday','Deadline'],
+];
+
+// ════════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════════
+let S = {
+  safety: { priya:30, marcus:30, lia:30, tom:30 },
+  disclosed: { priya:false, marcus:false, lia:false, tom:false },
+  day: 0,
+};
+
+let speed = 1;
+const T = (ms) => Math.max(ms / speed, 80);
+
+// ════════════════════════════════════════════════
+//  DOM HELPERS
+// ════════════════════════════════════════════════
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => document.querySelectorAll(sel);
+
+function wait(ms) { return new Promise(r => setTimeout(r, T(ms))); }
+
+function scrollChat() {
+  const el = $('#chat-messages');
+  el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+}
+
+function updateBars() {
+  // Team average
+  const vals = Object.values(S.safety);
+  const avg = vals.reduce((a,b)=>a+b,0) / vals.length;
+  const pct = Math.max(0, Math.min(100, avg));
+  const fill = $('#trust-fill');
+  if (fill) {
+    fill.style.width = pct + '%';
+    fill.style.backgroundColor = pct < 35 ? 'var(--danger)' : pct < 55 ? 'var(--warning)' : 'var(--success)';
+  }
+  // Individual bars
+  for (const [id, val] of Object.entries(S.safety)) {
+    const bar = document.querySelector(`.tm-safety-fill[data-id="${id}"]`);
+    if (bar) {
+      const p = Math.max(0, Math.min(100, val));
+      bar.style.width = p + '%';
+      bar.style.backgroundColor = p < 35 ? 'var(--danger)' : p < 55 ? 'var(--warning)' : 'var(--success)';
+    }
+    // Disclosed badge
+    if (S.disclosed[id]) {
+      const card = document.querySelector(`.tm-card[data-id="${id}"]`);
+      if (card && !card.classList.contains('tm-disclosed')) card.classList.add('tm-disclosed');
+    }
+  }
+}
+
+function applyEffects(effects) {
+  for (const [id, delta] of Object.entries(effects)) {
+    S.safety[id] = Math.max(0, Math.min(100, S.safety[id] + delta));
+  }
+  updateBars();
+}
+
+// ════════════════════════════════════════════════
+//  RENDERING
+// ════════════════════════════════════════════════
+function buildSidebar() {
+  const sb = $('#sidebar');
+  sb.innerHTML = '<h3>Team</h3>';
+  for (const [id, tm] of Object.entries(TM)) {
+    sb.innerHTML += `
+      <div class="tm-card" data-id="${id}">
+        <div class="tm-avatar" style="background:${tm.color}">${tm.initial}</div>
+        <div class="tm-info">
+          <div class="tm-name">${tm.name}</div>
+          <div class="tm-role">${tm.role}</div>
+          <div class="tm-safety-bar"><div class="tm-safety-fill" data-id="${id}" style="width:30%;background:var(--danger)"></div></div>
+        </div>
+      </div>`;
+  }
+}
+
+let msgCounter = 0;
+const timeForDay = (d) => {
+  const bases = [null,'9:0','9:0','9:0','9:0','9:0'];
+  const base = bases[S.day] || '9:0';
+  const [h,m] = base.split(':').map(Number);
+  const mins = m + msgCounter * 2;
+  return `${h + Math.floor(mins/60)}:${String(mins%60).padStart(2,'0')} AM`;
+};
+
+async function showMsg(from, text, cls = '') {
+  msgCounter++;
+  const container = $('#chat-messages');
+  const isNarration = from === 'narration';
+  const isYou = from === 'you';
+  const tm = TM[from];
+
+  // Typing indicator
+  if (!isNarration) {
+    const typing = document.createElement('div');
+    typing.className = 'typing-indicator';
+    typing.innerHTML = `<span>${isYou ? 'You' : tm?.name || from}</span> is typing<span class="dots"><span>.</span><span>.</span><span>.</span></span>`;
+    const typingArea = $('#typing-area');
+    typingArea.innerHTML = '';
+    typingArea.appendChild(typing);
+    scrollChat();
+    await wait(800 + Math.random() * 600);
+    typingArea.innerHTML = '';
+  }
+
+  const div = document.createElement('div');
+  if (isNarration) {
+    div.className = `msg msg-narration ${cls}`;
+    div.innerHTML = `<div class="msg-text">${text}</div>`;
+  } else {
+    const avatar = isYou
+      ? `<div class="msg-avatar" style="background:var(--accent)">Y</div>`
+      : `<div class="msg-avatar" style="background:${tm?.color||'var(--bg-tertiary)'}">${tm?.initial||'?'}</div>`;
+    const name = isYou ? 'You' : tm?.name || from;
+    const roleTag = isYou ? 'Team Lead' : tm?.role || '';
+    div.className = `msg ${cls}`;
+    div.innerHTML = `
+      <div class="msg-wrap">
+        ${avatar}
+        <div class="msg-body">
+          <div class="msg-header">
+            <span class="msg-author" style="color:${isYou?'var(--accent)':tm?.color||'var(--text-primary)'}">${name}</span>
+            <span class="msg-time">${roleTag} · ${timeForDay(S.day)}</span>
+          </div>
+          <div class="msg-text">${text}</div>
+        </div>
+      </div>`;
+  }
+  container.appendChild(div);
+  scrollChat();
+  if (isNarration) await wait(1200);
+  else await wait(400);
+}
+
+async function showChoice(prompt, options) {
+  return new Promise(resolve => {
+    const area = $('#choices-area');
+    area.classList.remove('hidden');
+    const keys = ['A','B','C','D'];
+    area.innerHTML = `<div class="choices-prompt">${prompt}</div>` +
+      options.map((o, i) => `<button class="choice-btn" data-idx="${i}"><span class="choice-key">${keys[i]}</span>${o.text}</button>`).join('');
+    scrollChat();
+    area.querySelectorAll('.choice-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const idx = +btn.dataset.idx;
+        area.classList.add('hidden');
+        area.innerHTML = '';
+        // Show chosen option as player message
+        await showMsg('you', options[idx].text);
+        resolve(options[idx]);
+      }, {once:true});
+    });
+  });
+}
+
+async function showDayTransition(day) {
+  S.day = day;
+  msgCounter = 0;
+  const overlay = $('#day-overlay');
+  const [num, name, sub] = DAY_TITLES[day];
+  $('#overlay-day').textContent = num;
+  $('#overlay-name').textContent = name;
+  $('#overlay-sub').textContent = sub;
+  $('#day-badge').textContent = `${num} · ${name}`;
+  overlay.classList.remove('hidden');
+  await wait(100);
+  overlay.classList.add('visible');
+  await wait(1800);
+  overlay.classList.remove('visible');
+  await wait(500);
+  overlay.classList.add('hidden');
+  // Clear chat for new day
+  $('#chat-messages').innerHTML = '';
+  await wait(300);
+}
+
+// ════════════════════════════════════════════════
+//  GAME SCRIPT
+// ════════════════════════════════════════════════
+async function playGame() {
+
+  // ──── DAY 1: MONDAY ────
+  await showDayTransition(1);
+
+  await showMsg('narration','You open your laptop for the morning standup. Four names in the channel, cameras off as usual. You\'re leading a one-week sprint to build a customer analytics dashboard. Deadline: Friday.');
+
+  await showMsg('you','Morning everyone 👋 Let\'s do our standup. What\'s on your plates today?');
+  await showMsg('priya','Hey! Working on the database migration for the new schema. Should have it done by end of day.');
+  await showMsg('marcus','Morning. Plugging away at the dashboard wireframes.');
+  await showMsg('lia','Hi. Setting up the test environment. Will start on test cases once specs are locked.');
+  await showMsg('tom','Hey all. Got the component library scaffolded. Starting the login flow.');
+
+  let c = await showChoice('How do you wrap up the standup?', [
+    { text:'Thanks team. Quick reminder — tight deadline this week. I need everyone to flag blockers immediately. No surprises on Friday.',
+      effects:{priya:-8, marcus:-8, lia:-8, tom:-8},
+      followUp:[{from:'narration',text:'The channel goes quiet for a moment. Lia\'s status switches to Away.'}] },
+    { text:'Sounds great. Let\'s keep the momentum going — ping me if anything blocks you.',
+      effects:{priya:3, marcus:3, lia:3, tom:3},
+      followUp:[{from:'priya',text:'Will do 👍'}] },
+    { text:'Thanks team. Real talk — I packed a lot into this sprint and I\'m not 100% sure the scope is right. If anything feels off or unclear, I genuinely need to hear it.',
+      effects:{priya:12, marcus:12, lia:12, tom:12},
+      followUp:[{from:'narration',text:'A brief pause. Then Marcus starts typing, stops. Lia\'s status dot goes green. Something shifted, even if no one speaks yet.'}] },
+  ]);
+  applyEffects(c.effects);
+  for (const f of c.followUp) await showMsg(f.from, f.text);
+  await wait(800);
+
+  // Afternoon - Priya DM
+  await showMsg('narration', '— Later that afternoon, Priya sends a direct message —');
+  await showMsg('priya','Hey, quick question — the migration script. Should I handle backward compatibility with the old schema, or just focus on the new one?');
+
+  c = await showChoice('Reply to Priya', [
+    { text:'Both. We can\'t afford to break anything in production.',
+      effects:{priya:-5},
+      followUp:[{from:'priya',text:'OK. That adds a lot of scope but I\'ll figure it out.'}] },
+    { text:'Just the new schema. Let\'s not over-engineer it.',
+      effects:{priya:3},
+      followUp:[{from:'priya',text:'Got it, thanks for the clarity.'}] },
+    { text:'Honestly, great question — I\'ve been going back and forth on it myself. Can we think through the tradeoffs together for 10 minutes?',
+      effects:{priya:15},
+      followUp:[{from:'priya',text:'Yeah, I\'d really like that actually. Let me grab my notes.'}] },
+  ]);
+  applyEffects(c.effects);
+  for (const f of c.followUp) await showMsg(f.from, f.text);
+  await wait(600);
+
+  // Tom question
+  await showMsg('narration', '— Late afternoon, Tom posts in the channel —');
+  await showMsg('tom','Quick update — login flow is coming along. Also, I noticed the settings page is assigned to me too. Just confirming that\'s intentional?');
+
+  c = await showChoice('Reply to Tom', [
+    { text:'Yes, that\'s yours. Let me know if you need help prioritizing.',
+      effects:{tom:-5},
+      followUp:[{from:'tom',text:'OK. On it.'}] },
+    { text:'Don\'t worry about settings for now. Focus on login.',
+      effects:{tom:5},
+      followUp:[{from:'tom',text:'Sounds good, thanks.'}] },
+    { text:'Hmm, that might be too much for one person. Are you feeling stretched? Be honest with me.',
+      effects:{tom:15},
+      followUp:[{from:'tom',text:'I mean... it\'s a lot. But I can manage.'},{from:'narration',text:'He said he can manage. But the ellipsis before it told a different story.'}] },
+  ]);
+  applyEffects(c.effects);
+  for (const f of c.followUp) await showMsg(f.from, f.text);
+
+  // ──── DAY 2: TUESDAY ────
+  await showDayTransition(2);
+
+  await showMsg('narration','Tuesday morning. You notice Marcus hasn\'t updated the project board since yesterday.');
+  await showMsg('you','Morning standup! How\'s everyone feeling today?');
+  await showMsg('marcus','Dashboard wireframes are... progressing. Might need a bit more time.');
+  await showMsg('priya','Migration is taking longer than I expected. Running into some edge cases with the data types.');
+  await showMsg('tom','Login page is functional. Moving to the data table component.');
+  await showMsg('lia','Test environment is stable. Still waiting on finalized API specs for the integration tests.');
+
+  c = await showChoice('Marcus seems hesitant. How do you respond?', [
+    { text:'Marcus, I need those wireframes by EOD tomorrow. Can I count on that?',
+      effects:{marcus:-12, lia:-5, tom:-5, priya:-5},
+      followUp:[{from:'marcus',text:'I\'ll do my best.'},{from:'narration',text:'Marcus\'s response is two seconds too fast — the answer of someone who stopped thinking and started complying. The rest of the team watches.'}] },
+    { text:'Take the time you need, Marcus. Quality over speed.',
+      effects:{marcus:5},
+      followUp:[{from:'marcus',text:'Thanks. Appreciate that.'}] },
+    { text:'Marcus — what part is tricky? Honestly, sometimes my briefs are vague and I want to fix that if that\'s the issue.',
+      effects:{marcus:18, lia:5, tom:3, priya:3},
+      followUp:[{from:'marcus',text:'Well... the brief covers a lot of ground. I\'m just making sure I\'m focused on the right things.'},{from:'narration',text:'He didn\'t say everything. But he said more than he would have yesterday.'}] },
+  ]);
+  applyEffects(c.effects);
+  for (const f of c.followUp) await showMsg(f.from, f.text);
+  await wait(600);
+
+  // Lia DM
+  await showMsg('narration','— Lia sends you a private message —');
+  await showMsg('lia','Hey, are you set on the denormalized data model? I know the team already agreed on it, but...');
+  await showMsg('narration','She trails off. The cursor blinks.');
+
+  c = await showChoice('Lia is testing the waters', [
+    { text:'Yeah, we committed to that approach in planning. Is there a specific issue?',
+      effects:{lia:-10},
+      followUp:[{from:'lia',text:'No, forget it. Just double-checking.'},{from:'narration',text:'She retreated. Whatever she was going to say is now locked behind a wall you just built.'}] },
+    { text:'Let\'s stick with the plan for now. Too late to change direction mid-sprint.',
+      effects:{lia:-15},
+      followUp:[{from:'lia',text:'Understood.'},{from:'narration',text:'One word. No emoji. She won\'t bring it up again.'}] },
+    { text:'I\'m always open to pushback — especially on architecture. What\'s on your mind?',
+      effects:{lia:15},
+      followUp:[{from:'lia',text:'I have some concerns about the query patterns at scale. Maybe I\'m wrong. Can I put together a quick analysis?'},{from:'you',text:'Please do. I\'d rather hear a hard truth now than discover it in production.'}] },
+  ]);
+  applyEffects(c.effects);
+  for (const f of c.followUp) await showMsg(f.from, f.text);
+  await wait(600);
+
+  // Team channel update
+  await showMsg('narration','— End of day, Priya posts in the channel —');
+  const priyaGuarded = S.safety.priya < 45;
+  if (priyaGuarded) {
+    await showMsg('priya','Migration update: on track, just working through some details.');
+  } else {
+    await showMsg('priya','Heads up — I\'m going to be a bit late on the migration. Hit a problem I didn\'t fully expect.');
+  }
+
+  c = await showChoice('Respond to the update', [
+    { text:'OK. How late are we talking? I need to update the stakeholders.',
+      effects:{priya:-8, marcus:-3, lia:-3, tom:-3},
+      followUp:[{from:'priya',text: priyaGuarded ? 'Should be fine. I\'ll handle it.' : 'Maybe a day. I\'ll keep you posted.'}] },
+    { text:'Thanks for the transparency, Priya. In my experience, migrations always have surprises. What do you need from me?',
+      effects:{priya:12, marcus:5, lia:5, tom:5},
+      followUp:[{from:'priya',text:'Honestly, just knowing you\'re not going to panic helps. I\'ll have a clearer picture tomorrow.'}] },
+    { text:'Got it. Keep us posted.',
+      effects:{priya:2},
+      followUp:[] },
+  ]);
+  applyEffects(c.effects);
+  for (const f of c.followUp) await showMsg(f.from, f.text);
+
+  // ──── DAY 3: WEDNESDAY ────
+  await showDayTransition(3);
+
+  await showMsg('narration','Midweek. You open the project board — yellow and red indicators. The chat messages have gotten shorter. Response times, longer.');
+  await showMsg('you','Midweek check-in, everyone. How are things going — really?');
+
+  // Conditional messages based on safety
+  if (S.safety.priya >= 50) {
+    await showMsg('priya','I\'ll be straight — the migration has a problem I\'m still working through. It\'s not trivial, but I don\'t want to raise a false alarm.','msg-system');
+  } else {
+    await showMsg('priya','Migration continuing. Progress is being made.','msg-silence');
+  }
+
+  if (S.safety.marcus >= 50) {
+    await showMsg('marcus','I have the wireframes, but... I have some questions about whether they match what the stakeholders actually want.','msg-system');
+  } else {
+    await showMsg('marcus','Wireframes will be ready soon.','msg-silence');
+  }
+
+  if (S.safety.lia >= 50) {
+    await showMsg('lia','Tests are written. But I want to flag something about the architecture, if there\'s space for that.','msg-system');
+  } else {
+    await showMsg('lia','Tests progressing.','msg-silence');
+  }
+
+  if (S.safety.tom >= 50) {
+    await showMsg('tom','Components are built. I\'m just... working long hours to keep up.','msg-system');
+  } else {
+    await showMsg('tom','On track.','msg-silence');
+  }
+
+  // Lia specifically almost-discloses
+  if (S.safety.lia >= 40) {
+    c = await showChoice('Lia mentioned the architecture again', [
+      { text:'Lia, absolutely — this is the right time for that. What\'s your concern? Even if it challenges the plan, especially if it challenges the plan.',
+        effects:{lia:20, marcus:5, tom:5, priya:5},
+        followUp:[{from:'lia',text:'OK. I\'ve been running some estimates and I think our query patterns will time out above a few hundred concurrent users. I have a proposal for a fix.'},{from:'narration',text:'She exhales. You can almost hear it through the text.'}] },
+      { text:'Let\'s table architecture for now and focus on delivery. We can revisit post-launch.',
+        effects:{lia:-12, marcus:-3, tom:-3, priya:-3},
+        followUp:[{from:'lia',text:'Understood.'},{from:'narration',text:'Two syllables. The door that was opening just closed.'}] },
+      { text:'Lia, put your thoughts in a doc and I\'ll review it after the sprint.',
+        effects:{lia:-5},
+        followUp:[{from:'lia',text:'Sure. I\'ll write it up.'},{from:'narration',text:'She\'ll write the doc. It will be thorough, careful, and too late.'}] },
+    ]);
+  } else {
+    c = await showChoice('The updates feel terse. What do you do?', [
+      { text:'I sense some things are being left unsaid. I want to be clear: there\'s no penalty for raising a problem. I\'d rather know now.',
+        effects:{lia:12, marcus:12, tom:12, priya:12},
+        followUp:[{from:'narration',text:'A long pause. No one responds — but no one dismisses it either. The words hang in the channel.'}] },
+      { text:'OK, sounds like we\'re on track. Let\'s keep pushing.',
+        effects:{lia:0, marcus:0, tom:0, priya:0},
+        followUp:[] },
+      { text:'I need a percentage complete from everyone by 5 PM. Update the board.',
+        effects:{lia:-10, marcus:-10, tom:-10, priya:-10},
+        followUp:[{from:'narration',text:'Green statuses start appearing on the board. But you know — and they know — that green doesn\'t mean safe. It means silent.'}] },
+    ]);
+  }
+  applyEffects(c.effects);
+  for (const f of c.followUp) await showMsg(f.from, f.text);
+  await wait(500);
+
+  // Team-wide midweek choice
+  c = await showChoice('Midweek team message', [
+    { text:'Team — honest question: are we going to make Friday? I\'d rather adjust scope now than find out too late. And I\'d rather hear a hard truth from you than deliver a broken product.',
+      effects:{priya:12, marcus:12, lia:12, tom:12},
+      followUp:[{from:'narration',text:'Marcus starts typing. Stops. Starts again. The awareness is spreading — the sense that maybe, just maybe, honesty is safer than silence.'}] },
+    { text:'I know it\'s a tough week. Let\'s push through — I believe in this team.',
+      effects:{priya:0, marcus:0, lia:0, tom:0},
+      followUp:[{from:'narration',text:'Thumbs-up reactions appear. But belief doesn\'t fix broken migrations or unclear requirements.'}] },
+    { text:'No more updates needed today. Just heads down, deliver. We\'ll regroup tomorrow.',
+      effects:{priya:-8, marcus:-8, lia:-8, tom:-8},
+      followUp:[{from:'narration',text:'Heads down. The phrase every team uses when they mean: stop talking, stop thinking, stop questioning. Just comply.'}] },
+  ]);
+  applyEffects(c.effects);
+  for (const f of c.followUp) await showMsg(f.from, f.text);
+
+  // ──── DAY 4: THURSDAY ────
+  await showDayTransition(4);
+
+  await showMsg('narration','Thursday morning. One day before the deadline. This is the moment that matters — the last window where hidden problems can still be surfaced and fixed. Or they stay buried, and ship on Friday.');
+
+  await showMsg('you','Morning, team. Tomorrow is the deadline. This is our last real chance to course-correct. I want to hear the truth, even if it\'s uncomfortable.');
+  await wait(600);
+
+  const THRESHOLD = 62;
+  const disclosers = [];
+  const silent = [];
+  for (const id of ['priya','marcus','lia','tom']) {
+    if (S.safety[id] >= THRESHOLD) disclosers.push(id);
+    else silent.push(id);
+  }
+
+  // Process disclosures
+  for (const id of disclosers) {
+    await wait(800);
+    if (id === 'priya') {
+      await showMsg('priya','I need to tell you something. On Monday, I ran the migration and it... corrupted some of the test data. I\'ve been trying to fix it on my own all week. I should have said something earlier. I\'m sorry.','msg-disclosure');
+
+      c = await showChoice('Priya just admitted a mistake', [
+        { text:'Priya, thank you for telling me. Seriously — that took courage, and catching this now saves us from a much bigger problem. Let\'s fix it together. What do you need?',
+          effects:{priya:10, marcus:8, lia:8, tom:8},
+          followUp:[{from:'priya',text:'I think I can recover the data if I get a few hours of uninterrupted time and maybe some help reviewing the rollback script.'}] },
+        { text:'This should have been flagged on Monday. We\'ve lost three days.',
+          effects:{priya:-15, marcus:-10, lia:-10, tom:-10},
+          followUp:[{from:'narration',text:'Priya goes quiet. The others watch. A lesson is being learned — but not the one you wanted to teach. The lesson is: don\'t admit mistakes.'}] },
+        { text:'OK. How bad is it? Can we recover?',
+          effects:{priya:3, marcus:2, lia:2, tom:2},
+          followUp:[{from:'priya',text:'I think so. Mostly. I\'ll need to re-run the migration from a backup.'}] },
+      ]);
+    } else if (id === 'marcus') {
+      await showMsg('marcus','Can I be honest about something? I don\'t fully understand what the stakeholders want from this dashboard. I\'ve been designing based on my best guess, but I\'m worried I\'ve been building the wrong thing this whole time.','msg-disclosure');
+
+      c = await showChoice('Marcus just admitted confusion', [
+        { text:'Marcus, I really appreciate you saying that. The brief I wrote probably wasn\'t clear enough — that\'s on me. Let\'s get on a quick call and nail this down right now.',
+          effects:{marcus:10, priya:8, lia:8, tom:8},
+          followUp:[{from:'marcus',text:'That would be amazing. I have specific questions — I think 20 minutes would save us days of rework.'}] },
+        { text:'You should have asked for clarification earlier. We\'re on day four.',
+          effects:{marcus:-15, priya:-10, lia:-10, tom:-10},
+          followUp:[{from:'narration',text:'Marcus\'s avatar goes idle. He won\'t ask a question in this team again for a very long time.'}] },
+        { text:'Show me what you have and we\'ll see if it\'s close enough.',
+          effects:{marcus:3, priya:2, lia:2, tom:2},
+          followUp:[{from:'marcus',text:'OK, sharing my screen now...'}] },
+      ]);
+    } else if (id === 'lia') {
+      await showMsg('lia','I\'ve been wanting to say this since day one. The denormalized data model won\'t scale. Once we pass a few hundred users, the dashboard queries are going to time out. I know it\'s late, but I think we\'re heading toward a production outage if we ship as-is.','msg-disclosure');
+
+      c = await showChoice('Lia just challenged the architecture', [
+        { text:'Lia, this is exactly the kind of thing I need to hear — especially when it\'s hard to say. Thank you for pushing on this. Walk me through your analysis.',
+          effects:{lia:10, priya:8, marcus:8, tom:8},
+          followUp:[{from:'lia',text:'I\'ve been running estimates. With an index on the user_id field and lazy loading on the aggregate queries, we can fix this in about 4 hours without changing the schema.'}] },
+        { text:'Why didn\'t you bring this up in planning? It\'s Thursday.',
+          effects:{lia:-15, priya:-10, marcus:-10, tom:-10},
+          followUp:[{from:'narration',text:'Lia types nothing. The architecture flaw ships to production. Three weeks later, the dashboard goes down during a demo to the executive team.'}] },
+        { text:'Let\'s see if we can work around it for now and address it properly post-launch.',
+          effects:{lia:3, priya:2, marcus:2, tom:2},
+          followUp:[{from:'lia',text:'I can add a quick cache layer, but it\'s a band-aid. I want to flag that for the record.'}] },
+      ]);
+    } else if (id === 'tom') {
+      await showMsg('tom','I need to be straight with you. I\'m on three projects right now. I\'ve been working until 2 AM every night this week. I can deliver what I have, but the quality isn\'t what it should be, and honestly... I\'m burning out.','msg-disclosure');
+
+      c = await showChoice('Tom just admitted overload', [
+        { text:'Tom, I\'m glad you told me. Your health matters more than any deadline. Let me talk to the other PMs today and get you off at least one of those projects. What do you need right now?',
+          effects:{tom:10, priya:8, marcus:8, lia:8},
+          followUp:[{from:'tom',text:'Just... knowing that saying this doesn\'t make me look weak. Thank you.'},{from:'narration',text:'Something in the team shifts. The cost of honesty just went down for everyone.'}] },
+        { text:'That\'s an HR issue. Can you push through one more day? I\'ll make sure it\'s addressed next week.',
+          effects:{tom:-10, priya:-8, marcus:-8, lia:-8},
+          followUp:[{from:'narration',text:'Tom marks his remaining tasks as "in progress." He doesn\'t respond. He\'ll push through. He\'ll also update his résumé this weekend.'}] },
+        { text:'That\'s tough. Let me see what I can deprioritize for you on this sprint at least.',
+          effects:{tom:5, priya:2, marcus:2, lia:2},
+          followUp:[{from:'tom',text:'Thanks. Even knowing someone heard me helps.'}] },
+      ]);
+    }
+    applyEffects(c.effects);
+    for (const f of c.followUp) await showMsg(f.from, f.text);
+    S.disclosed[id] = true;
+    updateBars();
+  }
+
+  // Show silent teammates
+  for (const id of silent) {
+    await wait(600);
+    const tm = TM[id];
+    if (id === 'priya') {
+      await showMsg('narration',`${tm.name} posts a brief update: "Migration is green." You notice she was online at 4 AM.`);
+    } else if (id === 'marcus') {
+      await showMsg('narration',`${tm.name} shares the wireframes with a single message: "Done." No questions. No caveats. No confidence.`);
+    } else if (id === 'lia') {
+      await showMsg('narration',`${tm.name} posts: "All test cases pass." She doesn\'t mention that she excluded the load tests she knows would fail.`);
+    } else if (id === 'tom') {
+      await showMsg('narration',`${tm.name} marks every task green. His last commit was at 3:47 AM. He says nothing.`);
+    }
+  }
+
+  // ──── DAY 5: FRIDAY — OUTCOME ────
+  await showDayTransition(5);
+
+  const numDisclosed = Object.values(S.disclosed).filter(Boolean).length;
+  await showMsg('narration','Friday. Deadline day.');
+  await wait(1200);
+
+  if (numDisclosed >= 4) {
+    await showMsg('narration','The dashboard ships — not exactly as planned, but better. Priya\'s migration was fixed collaboratively. Marcus redesigned the wireframes with clear stakeholder input. Lia\'s architecture fix prevented a production outage. Tom\'s workload was redistributed. The team didn\'t just deliver a product — they built trust. And next sprint, they\'ll speak up even faster.');
+  } else if (numDisclosed >= 3) {
+    const who = Object.entries(S.disclosed).find(([k,v]) => !v);
+    const silentName = TM[who[0]].name;
+    await showMsg('narration',`The dashboard ships, mostly on time. Three teammates trusted you enough to reveal what they were hiding — and the team recovered. But ${silentName} stayed silent. Their hidden issue causes a problem in production the following week — not catastrophic, but a reminder that trust is never complete. It\'s built one conversation at a time.`);
+  } else if (numDisclosed >= 2) {
+    await showMsg('narration','The dashboard ships — barely. Two hidden issues surfaced, but two more remained buried. The corrupted data and the scaling flaw and the unclear requirements and the burnout — not all of them were caught. Production issues pile up in week two. Leadership asks what went wrong. The truth is: the team knew. They just didn\'t feel safe enough to say it.');
+  } else {
+    await showMsg('narration','The dashboard doesn\'t ship. The migration corruption, the wrong wireframes, the architecture flaw, and the burnout all collide in the final hours. Every one of these problems was known on Monday. Not one person felt safe enough to tell you. This isn\'t a failure of competence. It\'s a failure of trust.');
+  }
+
+  await wait(2000);
+  showEnding(numDisclosed);
+}
+
+// ════════════════════════════════════════════════
+//  ENDING SCREEN
+// ════════════════════════════════════════════════
+function showEnding(numDisclosed) {
+  const ratings = [
+    {title:'Silent Failure', color:'var(--danger)', desc:'The team knew everything. They told you nothing.'},
+    {title:'Fractured Trust', color:'var(--danger)', desc:'Most of the team stayed silent. The project paid the price.'},
+    {title:'Partial Safety', color:'var(--warning)', desc:'Some trust was built, but critical gaps remained.'},
+    {title:'Strong Safety', color:'var(--success)', desc:'The team trusted you enough to speak up when it mattered.'},
+    {title:'Exceptional Leader', color:'var(--success)', desc:'Every teammate felt safe to take interpersonal risks. Rare and powerful.'},
+  ];
+  const r = ratings[numDisclosed];
+
+  const ending = $('#ending');
+  ending.classList.remove('hidden');
+  ending.innerHTML = `
+    <div class="ending-content">
+      <h2 style="color:${r.color}">${r.title}</h2>
+      <div class="ending-rating">${r.desc}</div>
+      <div class="ending-narrative">
+        <strong>${numDisclosed}/4</strong> teammates disclosed their hidden concerns before the deadline.
+        ${numDisclosed >= 3
+          ? 'Your leadership created enough psychological safety for the team to take interpersonal risks — admitting mistakes, asking questions, challenging plans, and requesting help.'
+          : 'The interpersonal risk of speaking up outweighed the perceived benefit for too many of your teammates. They chose silence — the rational, self-protective choice in an unsafe environment.'}
+      </div>
+
+      <div class="ending-section">
+        <h3>The Four Image Risks (Edmondson, 2002)</h3>
+        ${Object.entries(TM).map(([id, tm]) => {
+          const s = S.safety[id];
+          const d = S.disclosed[id];
+          return `
+          <div class="result-card ${d ? 'disclosed' : 'silent'}">
+            <div class="result-avatar" style="background:${tm.color}">${tm.initial}</div>
+            <div class="result-info">
+              <div class="result-name">${tm.name} — ${tm.role}</div>
+              <div class="result-detail"><strong>Fear:</strong> ${tm.fear}</div>
+              <div class="result-detail"><strong>Hidden concern:</strong> ${tm.secret}</div>
+              <div class="result-bar-wrap">
+                <div class="result-bar"><div class="result-bar-fill" data-target="${s}" style="width:0%;background:${s<35?'var(--danger)':s<55?'var(--warning)':'var(--success)'}"></div></div>
+                <div class="result-bar-label"><span>Psychological Safety</span><span>${s}/100</span></div>
+              </div>
+            </div>
+            <span class="result-status ${d?'yes':'no'}">${d?'Disclosed':'Silent'}</span>
+          </div>`;
+        }).join('')}
+      </div>
+
+      <div class="ending-section">
+        <h3>Research Connection</h3>
+        <div class="ending-narrative" style="border-left-color:var(--lia)">
+          Each teammate represented one of Edmondson's <strong>four interpersonal image risks</strong> that inhibit learning behavior in teams:<br><br>
+          <strong>• Priya</strong> feared looking <em>incompetent</em> — so she hid her mistake.<br>
+          <strong>• Marcus</strong> feared looking <em>ignorant</em> — so he never asked for clarity.<br>
+          <strong>• Lia</strong> feared looking <em>negative</em> — so she suppressed her dissent.<br>
+          <strong>• Tom</strong> feared looking <em>disruptive</em> — so he suffered in silence.<br><br>
+          Your choices determined whether the <strong>immediate social cost</strong> of speaking up felt smaller than the <strong>long-term project cost</strong> of staying quiet.
+        </div>
+      </div>
+
+      <div class="ending-quote">
+        <blockquote>"The experience of psychological safety is that the <em>interpersonal climate</em> in one's work team does not threaten one's sense of self in the face of asking a question, reporting an error, or proposing a new idea."</blockquote>
+        <cite>— Amy C. Edmondson, 1999</cite>
+      </div>
+
+      <button id="replay-btn" onclick="location.reload()">Play Again</button>
+    </div>
+  `;
+
+  // Animate bars
+  setTimeout(() => {
+    ending.querySelectorAll('.result-bar-fill').forEach(bar => {
+      bar.style.width = bar.dataset.target + '%';
+    });
+  }, 300);
+}
+
+// ════════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  // Speed controls
+  document.querySelectorAll('.speed-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      speed = +btn.dataset.speed;
+      document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+  document.querySelector('.speed-btn[data-speed="1"]').classList.add('active');
+
+  // Start button
+  $('#start-btn').addEventListener('click', () => {
+    $('#intro').classList.add('hidden');
+    $('#game').classList.remove('hidden');
+    $('#speed-controls').classList.remove('hidden');
+    buildSidebar();
+    updateBars();
+    playGame();
+  });
+});
+</script>
+</body>
+</html>
